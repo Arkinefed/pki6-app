@@ -10,18 +10,30 @@ const REDIRECT_URL = OAuth2Data.web.redirect_uris[0];
 
 const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL)
 var authed = false;
+let loggedUser;
 
 router.get('/', (req, res) => {
 	if (!authed) {
 		// Generate an OAuth URL and redirect there
 		const url = oAuth2Client.generateAuthUrl({
 			access_type: 'offline',
-			scope: 'https://www.googleapis.com/auth/gmail.readonly'
+			scope: 'https://www.googleapis.com/auth/userinfo.profile'
 		});
 		console.log(url)
 		res.redirect(url);
 	} else {
-		res.send('Logged in')
+		var oauth2 = google.oauth2({ auth: oAuth2Client, version: 'v2' });
+		oauth2.userinfo.v2.me.get(function (err, result) {
+			if (err) {
+				console.log(err);
+			}
+			else {
+				loggedUser = result.data.name;
+				console.log(loggedUser);
+			}
+
+			res.send('Logged in: '.concat(loggedUser, ' <img src="', result.data.picture, '" width="23" height="23">'))
+		});
 	}
 })
 
