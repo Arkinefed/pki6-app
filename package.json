@@ -6,9 +6,12 @@
 		"start": "node ./bin/www"
 	},
 	"dependencies": {
+		"@types/gapi": "^0.0.44",
+		"coffeescript": "^2.7.0",
 		"cookie-parser": "~1.4.4",
 		"debug": "~2.6.9",
 		"express": "~4.16.1",
+		"gapi": "^0.0.3",
 		"googleapis": "^114.0.0",
 		"http-errors": "~1.6.3",
 		"morgan": "~1.9.1",

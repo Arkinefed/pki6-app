@@ -1,5 +1,10 @@
 extends layout
 
 block content
-	h1= title
-	p Welcome to #{title}
+	if authed
+		p Logged in: #{user}
+		img(src=picture, alt="picture", width="23", height="23")
+		br
+		a(href="/logout") logout
+	else
+		a(href="/login") login

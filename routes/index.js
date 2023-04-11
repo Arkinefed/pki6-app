@@ -8,34 +8,68 @@ const CLIENT_ID = OAuth2Data.web.client_id;
 const CLIENT_SECRET = OAuth2Data.web.client_secret;
 const REDIRECT_URL = OAuth2Data.web.redirect_uris[0];
 
-const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL)
+const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URL);
 var authed = false;
-let loggedUser;
+var loggedUser = 'null';
+var picture = 'null';
 
 router.get('/', (req, res) => {
+	if (authed) {
+		var oauth2 = google.oauth2({ auth: oAuth2Client, version: 'v2' });
+		new Promise(function (resolve, reject) {
+			oauth2.userinfo.v2.me.get(function (err, result) {
+				if (err) {
+					console.log(err);
+					reject(err);
+				}
+				else {
+					loggedUser = result.data.name;
+					picture = result.data.picture;
+					console.log(loggedUser);
+					resolve();
+				}
+			});
+		}).then(function () {
+			res.render("index", { authed: authed, user: loggedUser, picture: picture, title: 'pki6-app' });
+		});
+	}
+	else {
+		res.render("index", { authed: authed, user: loggedUser, picture: picture, title: 'pki6-app' });
+	}
+});
+
+router.get('/login', (req, res) => {
 	if (!authed) {
 		// Generate an OAuth URL and redirect there
 		const url = oAuth2Client.generateAuthUrl({
 			access_type: 'offline',
 			scope: 'https://www.googleapis.com/auth/userinfo.profile'
 		});
-		console.log(url)
+		console.log(url);
 		res.redirect(url);
-	} else {
-		var oauth2 = google.oauth2({ auth: oAuth2Client, version: 'v2' });
-		oauth2.userinfo.v2.me.get(function (err, result) {
-			if (err) {
-				console.log(err);
-			}
-			else {
-				loggedUser = result.data.name;
-				console.log(loggedUser);
-			}
-
-			res.send('Logged in: '.concat(loggedUser, ' <img src="', result.data.picture, '" width="23" height="23">'))
-		});
 	}
-})
+	else {
+		res.redirect('/');
+	}
+});
+
+router.get('/logout', (req, res) => {
+	if (authed) {
+		oAuth2Client.revokeCredentials((err, result) => {
+			if (err) {
+				console.log('Error revoking token', err);
+			} else {
+				console.log('Token revoked');
+			}
+		});
+
+		authed = false;
+		loggedUser = 'null';
+		picture = 'null';
+	}
+
+	res.redirect('/');
+});
 
 router.get('/auth/google/callback', function (req, res) {
 	const code = req.query.code
@@ -49,7 +83,8 @@ router.get('/auth/google/callback', function (req, res) {
 				console.log('Successfully authenticated');
 				oAuth2Client.setCredentials(tokens);
 				authed = true;
-				res.redirect('/')
+
+				res.redirect('/');
 			}
 		});
 	}
