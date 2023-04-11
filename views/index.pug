@@ -2,9 +2,18 @@ extends layout
 
 block content
 	if authed
-		p Logged in: #{user}
-		img(src=picture, alt="picture", width="23", height="23")
-		br
-		a(href="/logout") logout
+		if authedGoogle
+			p Logged in: #{userGoogle}
+			img(src=pictureGoogle, alt="picture", width="23", height="23")
+			br
+			a(href="/logout") logout
+
+		if authedGithub
+			p Logged in: #{userGithub}
+			br
+			a(href="/logout") logout
 	else
-		a(href="/login/google") login with google
+		p
+			a(href="/login/google") login with google
+		p
+			a(href="/login/github") login with github
