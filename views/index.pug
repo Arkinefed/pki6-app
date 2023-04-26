@@ -12,6 +12,20 @@ block content
 			p Logged in: #{userGithub}
 			br
 			a(href="/logout") logout
+		
+		table
+			tr
+				th name
+				th joined
+				th lastvisit
+				th counter
+			
+			each u in data
+				tr
+					td= u.name
+					td= u.joined
+					td= u.lastvisit
+					td= u.counter
 	else
 		p
 			a(href="/login/google") login with google

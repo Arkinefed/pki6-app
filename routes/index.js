@@ -7,6 +7,60 @@ const { google } = require('googleapis');
 const googleOAuth2 = require('../google_auth.json');
 const githubOAuth2 = require('../github_auth.json');
 
+const { Pool } = require("pg");
+const dotenv = require("dotenv");
+
+dotenv.config({ path: '../.env' });
+
+
+
+const getUsersFromDatabase = async () => {
+	const { PGHOST, PGDATABASE, PGUSER, PGPASSWORD } = process.env;
+	const URL = `postgres://${PGUSER}:${PGPASSWORD}@${PGHOST}/${PGDATABASE}`;
+
+	try {
+		const pool = new Pool({
+			URL: URL,
+			ssl: true
+		});
+
+		await pool.connect();
+		const res = await pool.query('SELECT * FROM public."users"');
+
+		databaseData.users = res.rows;
+
+		await pool.end();
+	} catch (error) {
+		console.log(error)
+	}
+};
+
+const insertOrUpdateUserInDatabase = async (user) => {
+	const { PGHOST, PGDATABASE, PGUSER, PGPASSWORD } = process.env;
+	const URL = `postgres://${PGUSER}:${PGPASSWORD}@${PGHOST}/${PGDATABASE}`;
+
+	try {
+		const pool = new Pool({
+			URL: URL,
+			ssl: true
+		});
+
+		await pool.connect();
+		const res = await pool.query(`SELECT * FROM public."users" where name like '${user}'`);
+
+		if (res.rowCount > 0) {
+			const res = await pool.query(`update public."users" set lastvisit = CURRENT_TIMESTAMP, counter = counter + 1 where name like '${user}'`);
+		}
+		else {
+			const res = await pool.query(`insert into public."users" (name, counter) values ('${user}', 1)`);
+		}
+
+		await pool.end();
+	} catch (error) {
+		console.log(error)
+	}
+};
+
 // google auth
 const googleAuthConfig = {
 	CLIENT_ID: googleOAuth2.web.client_id,
@@ -34,7 +88,17 @@ const githubAuthState = {
 	token: ''
 };
 
+const databaseData = {
+	users: null
+}
+
 router.get('/', (req, res) => {
+	getUsersFromDatabase()
+		.then({
+
+		})
+		.catch(error => console.error(error));
+
 	if (googleAuthState.authed) {
 		var oauth2 = google.oauth2({ auth: googleOAuth2Client, version: 'v2' });
 		new Promise(function (resolve, reject) {
@@ -48,11 +112,17 @@ router.get('/', (req, res) => {
 
 					googleAuthState.loggedUser = result.data.name;
 					googleAuthState.picture = result.data.picture;
-					console.log(googleAuthState.loggedUser);
+
 					resolve();
 				}
 			});
 		}).then(function () {
+			insertOrUpdateUserInDatabase(googleAuthState.loggedUser)
+				.then({
+
+				})
+				.catch(error => console.error(error));
+
 			res.render("index", {
 				authed: googleAuthState.authed || githubAuthState.authed,
 
@@ -63,7 +133,9 @@ router.get('/', (req, res) => {
 				authedGithub: githubAuthState.authed,
 				userGithub: githubAuthState.loggedUser,
 
-				title: 'pki6-app'
+				title: 'pki6-app',
+
+				data: databaseData.users
 			});
 		});
 	}
@@ -77,6 +149,18 @@ router.get('/', (req, res) => {
 		}).then((response) => {
 			githubAuthState.loggedUser = response.data.login;
 
+			insertOrUpdateUserInDatabase(githubAuthState.loggedUser)
+				.then(users => {
+
+				})
+				.catch(error => console.error(error));
+
+			getUsersFromDatabase()
+				.then(users => {
+
+				})
+				.catch(error => console.error(error));
+
 			res.render("index", {
 				authed: googleAuthState.authed || githubAuthState.authed,
 
@@ -87,7 +171,9 @@ router.get('/', (req, res) => {
 				authedGithub: githubAuthState.authed,
 				userGithub: githubAuthState.loggedUser,
 
-				title: 'pki6-app'
+				title: 'pki6-app',
+
+				data: databaseData.users
 			});
 		})
 	}
@@ -113,7 +199,7 @@ router.get('/login/google', (req, res) => {
 			access_type: 'offline',
 			scope: 'https://www.googleapis.com/auth/userinfo.profile'
 		});
-		console.log(url);
+
 		res.redirect(url);
 	}
 	else {
@@ -185,8 +271,6 @@ router.get('/auth/github/callback', function (req, res) {
 	}).then((response) => {
 		githubAuthState.authed = true;
 		githubAuthState.token = response.data.access_token;
-
-		console.log(githubAuthState);
 
 		res.redirect('/');
 	});
