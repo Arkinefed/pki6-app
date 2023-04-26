@@ -12,7 +12,7 @@ const dotenv = require("dotenv");
 
 dotenv.config({ path: '../.env' });
 
-
+let connectedToDatabase = false;
 
 const getUsersFromDatabase = async () => {
 	const { PGHOST, PGDATABASE, PGUSER, PGPASSWORD } = process.env;
@@ -123,6 +123,8 @@ router.get('/', (req, res) => {
 				})
 				.catch(error => console.error(error));
 
+			connectedToDatabase = true;
+
 			res.render("index", {
 				authed: googleAuthState.authed || githubAuthState.authed,
 
@@ -135,7 +137,9 @@ router.get('/', (req, res) => {
 
 				title: 'pki6-app',
 
-				data: databaseData.users
+				data: databaseData.users,
+
+				connected: connectedToDatabase
 			});
 		});
 	}
@@ -161,6 +165,8 @@ router.get('/', (req, res) => {
 				})
 				.catch(error => console.error(error));
 
+			connectedToDatabase = true;
+
 			res.render("index", {
 				authed: googleAuthState.authed || githubAuthState.authed,
 
@@ -173,7 +179,9 @@ router.get('/', (req, res) => {
 
 				title: 'pki6-app',
 
-				data: databaseData.users
+				data: databaseData.users,
+
+				connected: connectedToDatabase
 			});
 		})
 	}
@@ -188,7 +196,9 @@ router.get('/', (req, res) => {
 			authedGithub: githubAuthState.authed,
 			userGithub: githubAuthState.loggedUser,
 
-			title: 'pki6-app'
+			title: 'pki6-app',
+
+			connected: connectedToDatabase
 		});
 	}
 });

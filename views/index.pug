@@ -1,19 +1,53 @@
 extends layout
 
 block content
+	div(id="connected-to-database", class="modal fade", tabindex="-1")
+		div(class="modal-dialog")
+			div(class="modal-content")
+				div(class="modal-header")
+					h5(class="modal-title") Information
+					button(type="button", class="btn-close", data-bs-dismiss="modal")
+				div(class="modal-body")
+					p Connected to database
+				div(class="modal-footer")
+
+	div(id="not-connected-to-database", class="modal fade", tabindex="-1")
+		div(class="modal-dialog")
+			div(class="modal-content")
+				div(class="modal-header")
+					h5(class="modal-title") Information
+					button(type="button", class="btn-close", data-bs-dismiss="modal")
+				div(class="modal-body")
+					p Couldn't connect to database
+				div(class="modal-footer")
+
 	if authed
 		if authedGoogle
-			p Logged in: #{userGoogle}
-			img(src=pictureGoogle, alt="picture", width="23", height="23")
-			br
-			a(href="/logout") logout
+			nav(class="navbar navbar-expand-lg navbar-light bg-light")
+				div(class="container-fluid")
+					a(href="#", class="navbar-brand") #{userGoogle}
+					button(type="button", class="navbar-toggler", data-bs-toggle="collapse", data-bs-target="#navbarCollapse")
+						span(class="navbar-toggler-icon")
+					div(class="collapse navbar-collapse", id="navbarCollapse")
+						div(class="navbar-nav")
+							a(href="#", class="nav-item nav-link active")
+							img(src=pictureGoogle, alt="picture", width="23", height="23")
+						div(class="navbar-nav ms-auto")
+							a(href="/logout") logout
 
 		if authedGithub
-			p Logged in: #{userGithub}
-			br
-			a(href="/logout") logout
+			nav(class="navbar navbar-expand-lg navbar-light bg-light")
+				div(class="container-fluid")
+					a(href="#", class="navbar-brand") #{userGithub}
+					button(type="button", class="navbar-toggler", data-bs-toggle="collapse", data-bs-target="#navbarCollapse")
+						span(class="navbar-toggler-icon")
+					div(class="collapse navbar-collapse", id="navbarCollapse")
+						div(class="navbar-nav")
+							a(href="#", class="nav-item nav-link active")
+						div(class="navbar-nav ms-auto")
+							a(href="/logout") logout
 		
-		table
+		table(class="table table-primary")
 			tr
 				th name
 				th joined
@@ -26,6 +60,16 @@ block content
 					td= u.joined
 					td= u.lastvisit
 					td= u.counter
+		
+		if connected
+			script.
+				var m = new bootstrap.Modal(document.getElementById("connected-to-database"));
+				m.show();
+		else
+			script.
+				var m = new bootstrap.Modal(document.getElementById("not-connected-to-database"));
+				m.show();
+
 	else
 		p
 			a(href="/login/google") login with google
